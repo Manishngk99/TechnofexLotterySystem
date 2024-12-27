@@ -117,31 +117,43 @@ public class LotterySystemController : Controller
         return winner;
     }
 
-    private string GetCellValue(WorkbookPart workbookPart, Cell cell)
-    {
-        string value = cell?.InnerText;
+	private string GetCellValue(WorkbookPart workbookPart, Cell cell)
+	{
+		if (cell == null)
+			return string.Empty;
 
-        if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
-        {
-            int ssid = int.Parse(value);
-            SharedStringItem ssi = workbookPart.SharedStringTablePart.SharedStringTable.Elements<SharedStringItem>().ElementAt(ssid);
-            if (ssi.Text != null)
-            {
-                value = ssi.Text.Text;
-            }
-            else if (ssi.InnerText != null)
-            {
-                value = ssi.InnerText;
-            }
-            else if (ssi.InnerXml != null)
-            {
-                value = ssi.InnerXml;
-            }
-        }
+		string value = cell.InnerText;
 
-        return value;
-    }
-    public IActionResult DisplayWinner()
+		if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+		{
+			int ssid = int.Parse(value);
+			SharedStringItem ssi = workbookPart.SharedStringTablePart.SharedStringTable.Elements<SharedStringItem>().ElementAt(ssid);
+			if (ssi.Text != null)
+			{
+				value = ssi.Text.Text;
+			}
+			else if (ssi.InnerText != null)
+			{
+				value = ssi.InnerText;
+			}
+			else if (ssi.InnerXml != null)
+			{
+				value = ssi.InnerXml;
+			}
+		}
+		else if (cell.CellValue != null && cell.DataType == null)
+		{
+			// Handle numeric values (e.g., phone numbers)
+			if (double.TryParse(cell.CellValue.Text, out double numericValue))
+			{
+				value = numericValue.ToString("G15"); // Ensures it doesn't get scientific notation
+			}
+		}
+
+		return value;
+	}
+
+	public IActionResult DisplayWinner()
     {
         
         // Retrieve winner's name, number, and amount from TempData
